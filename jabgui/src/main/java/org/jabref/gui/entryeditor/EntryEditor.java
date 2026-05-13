@@ -104,6 +104,8 @@ public class EntryEditor extends BorderPane implements PreviewControls, AdaptVis
 
     private SourceTab sourceTab;
 
+    private String lastFocusedFieldName;
+
     @FXML private TabPane tabbed;
 
     @FXML private Button typeChangeButton;
@@ -284,10 +286,12 @@ public class EntryEditor extends BorderPane implements PreviewControls, AdaptVis
                         event.consume();
                         break;
                     case ENTRY_EDITOR_NEXT_ENTRY:
+                        captureFocusedField();
                         tabSupplier.get().selectNextEntry();
                         event.consume();
                         break;
                     case ENTRY_EDITOR_PREVIOUS_ENTRY:
+                        captureFocusedField();
                         tabSupplier.get().selectPreviousEntry();
                         event.consume();
                         break;
@@ -313,6 +317,14 @@ public class EntryEditor extends BorderPane implements PreviewControls, AdaptVis
                 }
             }
         });
+    }
+
+    /// Captures the currently focused field name before entry navigation
+    private void captureFocusedField() {
+        Node focusedNode = getScene().getFocusOwner();
+        if (focusedNode instanceof TextInputControl textInput && textInput.getId() != null) {
+            lastFocusedFieldName = textInput.getId();
+        }
     }
 
     public void selectFieldDialog() {
@@ -518,6 +530,13 @@ public class EntryEditor extends BorderPane implements PreviewControls, AdaptVis
         EntryEditorTab selectedTab = getSelectedTab();
         if (selectedTab != null) {
             Platform.runLater(() -> selectedTab.notifyAboutFocus(currentlyEditedEntry));
+        }
+
+        // Restore focus to the same field after navigation
+        if (lastFocusedFieldName != null) {
+            String fieldToRestore = lastFocusedFieldName;
+            lastFocusedFieldName = null;
+            Platform.runLater(() -> selectField(fieldToRestore));
         }
     }
 
